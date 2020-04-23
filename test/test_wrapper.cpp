@@ -17,6 +17,6 @@ TEST(TestWrapper, WrapperFunction)
 	auto g = DPCB::wrapper_function<&MyClass::f>::bind(&mc);
 	EXPECT_TRUE(g());
 	using func_t = typename DPCB::wrapper_function<&MyClass::f>::type_func;
-	std::function<func_t> g = f;
-	EXPECT_TRUE(g());
+	std::function<func_t> h = f;
+	EXPECT_TRUE(h());
 }

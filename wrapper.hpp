@@ -2,8 +2,16 @@
 #define _DPCB_WRAPPER_HPP_
 
 #include <utility>
+#include "misc.hpp"
 
 namespace DPCB{
+
+template<std::size_t, typename T>
+class wrapper_label : T
+{
+public:
+	using type = T;
+};
 
 template<auto F>
 class wrapper_function
@@ -27,6 +35,15 @@ class wrapper_function
 public:
     using type_func = typename inner<decltype(F)>::type_func;
     static const constexpr auto bind = inner<decltype(F)>::bind;
+};
+
+
+template<typename ...Ts>
+class wrapper_base : public Ts...
+{
+public:
+	template<std::size_t Index>
+	using get_base = typename retrieve_type<Index, Ts...>::type;
 };
 
 }
