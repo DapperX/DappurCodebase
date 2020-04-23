@@ -1,6 +1,6 @@
 #include <string>
 #include "gtest/gtest.h"
-#include "count_member.hpp"
+#include "class.hpp"
 
 struct struct_empty{};
 
