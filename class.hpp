@@ -19,10 +19,13 @@ class count_member_impl
 {
 	template<class U, std::size_t... I>
 	static auto match(std::index_sequence<I...>)
-		-> decltype((void)(U{{(I,std::declval<any_convertor>())}...}), std::true_type{});
+		-> decltype(
+			(void)(U{{(I,std::declval<any_convertor>())}...}),
+			std::declval<std::true_type>()
+		);
 
 	template<class U>
-	static std::false_type match(...);
+	static auto match(...) -> std::false_type;
 public:
 	static constexpr const std::size_t value =
 		std::conditional_t<
