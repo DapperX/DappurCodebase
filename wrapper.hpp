@@ -6,6 +6,11 @@
 
 namespace DPCB{
 
+template<typename ...Ts>
+class wrapper_any
+{
+};
+
 template<std::size_t, typename T>
 class wrapper_label : T
 {
