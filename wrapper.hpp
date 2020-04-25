@@ -9,37 +9,22 @@ namespace DPCB{
 template<typename ...Ts>
 class wrapper_any
 {
+public:
+	template<std::size_t Index>
+	using type = typename retrieve_type<Index, Ts...>::type;
 };
 
+template<>
+class wrapper_any<>
+{
+};
+
+
 template<std::size_t, typename T>
-class wrapper_label : T
+class wrapper_label : public T
 {
 public:
 	using type = T;
-};
-
-template<auto F>
-class wrapper_function
-{
-	template<typename> class inner;
-
-	template<class Cls, typename Ret, typename... Args>
-	class inner<Ret(Cls::*)(Args...)>
-	{
-	public:
-		using type_func = Ret(Args...);
-
-		static auto bind(Cls *obj)
-		{
-			return [=](Args ...args){
-				return (obj->*F)(std::forward<Args>(args)...);
-			};
-		}
-	};
-
-public:
-	using type_func = typename inner<decltype(F)>::type_func;
-	static const constexpr auto bind = inner<decltype(F)>::bind;
 };
 
 

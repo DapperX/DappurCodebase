@@ -65,6 +65,40 @@ class function_trait<Ret(Args...)>
 {
 };
 
+
+template<auto F>
+class bind_this
+{
+	using trait = function_trait<decltype(F)>;
+	static_assert(
+		std::is_base_of<
+			function_category_method,
+			typename trait::category
+		>::value,
+		"Expect to bind a class method"
+	);
+
+	template<class = typename trait::type_argument> class impl;
+
+	template<typename ...Args>
+	class impl<wrapper_any<Args...>>
+	{
+	public:
+		using type = typename trait::type_return(Args...);
+
+		static auto bind(typename trait::type_class *obj)
+		{
+			return [=](Args ...args) -> typename trait::type_return{
+				return (obj->*F)(std::forward<Args>(args)...);
+			};
+		}
+	};
+
+public:
+	using type_function = typename impl<>::type;
+	static const constexpr auto bind = impl<>::bind;
+};
+
 }
 
 #endif //_DPCB_FUNCTION_HPP_

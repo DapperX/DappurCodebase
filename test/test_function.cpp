@@ -82,3 +82,21 @@ TEST(TestFunction, FunctionTrait)
 	EXPECT_TRUE((std::is_same<trait_derive::type_argument,DPCB::wrapper_any<>>::value))
 		<< typeid(trait_derive::type_argument).name();
 }
+
+class ClassToBind
+{
+public:
+	bool f(){return true;}
+};
+
+bool f(){return true;}
+
+TEST(TestWrapper, BindThis)
+{
+	ClassToBind mc;
+	auto g = DPCB::bind_this<&ClassToBind::f>::bind(&mc);
+	EXPECT_TRUE(g());
+	using func_t = typename DPCB::bind_this<&ClassToBind::f>::type_function;
+	std::function<func_t> h = f;
+	EXPECT_TRUE(h());
+}
