@@ -21,7 +21,7 @@ class count_member_impl
 	static auto match(std::index_sequence<I...>)
 		-> decltype(
 			(void)(U{{(I,std::declval<any_convertor>())}...}),
-			std::declval<std::true_type>()
+			std::true_type()
 		);
 
 	template<class U>
