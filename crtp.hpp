@@ -1,5 +1,5 @@
-#ifndef _DPCB_FUNCTION_HPP_
-#define _DPCB_FUNCTION_HPP_
+#ifndef _DPCB_CRTP_HPP_
+#define _DPCB_CRTP_HPP_
 
 #include <cstdint>
 #include <type_traits>
@@ -57,4 +57,4 @@ using assembly = assembly_impl<wrapper_any<>, Bs...>;
 
 }
 
-#endif //_DPCB_FUNCTION_HPP_
+#endif //_DPCB_CRTP_HPP_
