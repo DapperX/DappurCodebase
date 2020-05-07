@@ -16,21 +16,24 @@ public:
 
 
 template<class Result, typename ...Ts>
-class reverse_pack;
+class reverse_pack_impl;
 
 template<class ...Rs, typename T, typename ...Ts>
-class reverse_pack<wrapper_any<Rs...>, T, Ts...>
+class reverse_pack_impl<wrapper_any<Rs...>, T, Ts...>
 {
 public:
-	using type = typename reverse_pack<wrapper_any<T, Rs...>, Ts...>::type;
+	using type = typename reverse_pack_impl<wrapper_any<T, Rs...>, Ts...>::type;
 };
 
 template<class ...Rs, typename T>
-class reverse_pack<wrapper_any<Rs...>, T>
+class reverse_pack_impl<wrapper_any<Rs...>, T>
 {
 public:
 	using type = wrapper_any<T, Rs...>;
 };
+
+template<typename ...Ts>
+using reverse_pack = reverse_pack_impl<wrapper_any<>, Ts...>;
 
 }
 

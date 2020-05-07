@@ -9,7 +9,7 @@ struct reverse_wrapper_any;
 template<typename ...Ts>
 struct reverse_wrapper_any<DPCB::wrapper_any<Ts...>>
 {
-	using type = typename DPCB::reverse_pack<DPCB::wrapper_any<>, Ts...>::type;
+	using type = typename DPCB::reverse_pack<Ts...>::type;
 };
 
 TEST(TestMisc, ReversePack)
