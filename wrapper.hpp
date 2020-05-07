@@ -3,16 +3,49 @@
 
 #include <utility>
 #include <tuple>
-#include "misc.hpp"
 
 namespace DPCB{
+
+namespace detail{
+
+template<std::size_t I, class Head, class ...Rs>
+class retrieve_type
+{
+public:
+	using type = typename retrieve_type<I-1, Rs...>::type;
+};
+
+template<class Head, class ...Rs>
+class retrieve_type<0, Head, Rs...>
+{
+public:
+	using type = Head;
+};
+
+}
+
 
 template<typename ...Ts>
 class wrapper_any
 {
+protected:
+	template<int Index, bool IsNeg=(Index<0)>
+	class get_type
+	{
+	public:
+		using type = typename detail::retrieve_type<Index, Ts...>::type;
+	};
+
+	template<int Index>
+	class get_type<Index, true>
+	{
+	public:
+		using type = typename detail::retrieve_type<Index+sizeof...(Ts), Ts...>::type;
+	};
+
 public:
-	template<std::size_t Index>
-	using type = typename retrieve_type<Index, Ts...>::type;
+	template<int Index>
+	using type = typename get_type<Index>::type;
 };
 
 template<>
@@ -34,7 +67,7 @@ class wrapper_base : public Ts...
 {
 public:
 	template<std::size_t Index>
-	using get_base = typename retrieve_type<Index, Ts...>::type;
+	using get_base = typename detail::retrieve_type<Index, Ts...>::type;
 };
 
 template<class T>

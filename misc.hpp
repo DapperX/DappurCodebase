@@ -2,8 +2,11 @@
 #define _DPCB_MISC_HPP_
 
 #include <cstdint>
+#include "wrapper.hpp"
 
 namespace DPCB{
+
+using detail::retrieve_type;
 
 class any_convertor
 {
@@ -12,18 +15,21 @@ public:
 };
 
 
-template<std::size_t I, class Head, class ...Rs>
-class retrieve_type
+template<class Result, typename ...Ts>
+class reverse_pack;
+
+template<class ...Rs, typename T, typename ...Ts>
+class reverse_pack<wrapper_any<Rs...>, T, Ts...>
 {
 public:
-	using type = typename retrieve_type<I-1, Rs...>::type;
+	using type = typename reverse_pack<wrapper_any<T, Rs...>, Ts...>::type;
 };
 
-template<class Head, class ...Rs>
-class retrieve_type<0, Head, Rs...>
+template<class ...Rs, typename T>
+class reverse_pack<wrapper_any<Rs...>, T>
 {
 public:
-	using type = Head;
+	using type = wrapper_any<T, Rs...>;
 };
 
 }
