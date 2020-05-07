@@ -25,6 +25,6 @@ $(DIR_RUN)/%.o : %.cpp
 	$(CXX) $< $(CXXFLAG) -c -o $@
 
 $(DIR_RUN)/%.d : %.cpp
-	@$(CXX) $< $(CXXFLAG) -MM > $@
+	@$(CXX) $< $(CXXFLAG) -MM -MT '$$(DIR_RUN)/$(<:%.cpp=%.o)' > $@
 
 sinclude $(TEST_DEP:%=$(DIR_RUN)/%)
