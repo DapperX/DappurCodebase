@@ -91,7 +91,7 @@ public:
 
 bool f(){return true;}
 
-TEST(TestWrapper, BindThis)
+TEST(TestFunction, BindThis)
 {
 	ClassToBind mc;
 	auto g = DPCB::bind_this<&ClassToBind::f>::bind(&mc);
