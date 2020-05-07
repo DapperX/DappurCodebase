@@ -9,7 +9,7 @@
 
 namespace DPCB{
 
-template<class Any, template<class...> class ...Bs>
+template<class Any, template<class> class ...Bs>
 class assembly_impl;
 
 template<class ...Bs>
@@ -43,7 +43,7 @@ public:
 	}
 };
 
-template<class ...Frds, template<class...> class B, template<class...> class ...Bs>
+template<class ...Frds, template<class> class B, template<class> class ...Bs>
 class assembly_impl<wrapper_any<Frds...>, B, Bs...> :
 	public assembly_impl<wrapper_any<Frds...,B<assembly_impl<wrapper_any<Frds...>,B,Bs...>>>, Bs...>
 {
@@ -52,7 +52,7 @@ public:
 	using assembly_impl<wrapper_any<Frds...,B<assembly_impl<wrapper_any<Frds...>,B,Bs...>>>, Bs...>::assembly_impl;
 };
 
-template<template<class...> class ...Bs>
+template<template<class> class ...Bs>
 using assembly = assembly_impl<wrapper_any<>, Bs...>;
 
 }
