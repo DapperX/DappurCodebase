@@ -35,6 +35,19 @@ public:
 template<typename ...Ts>
 using reverse_pack = reverse_pack_impl<wrapper_any<>, Ts...>;
 
+namespace detail{
+
+template<std::size_t N>
+class padding{
+	std::uint8_t __dummy_data[N];
+};
+
+template<>
+class padding<0>{
+};
+
+}
+
 }
 
 #endif //_DPCB_MISC_HPP_
