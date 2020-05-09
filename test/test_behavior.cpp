@@ -62,25 +62,28 @@ int* f(list<int>::behavior_list<D> &l)
 template<class D>
 struct behavior_A : DPCB::behavior<D>
 {
+	using behavior<D>::that;
 	int x;
 	behavior_A(int x_):x(x_){}
-	int f()const{return behavior<D>::that()->z;}
+	int f()const{return that()->z;}
 };
 
 template<class D>
 struct behavior_B : DPCB::behavior<D>
 {
+	using behavior<D>::that;
 	int y;
 	behavior_B(int y_):y(y_){}
-	int g(){return behavior<D>::that()->y;}
+	int g(){return that()->y;}
 };
 
 template<class D>
 struct behavior_C : DPCB::behavior<D>
 {
+	using behavior<D>::that;
 	int z;
 	behavior_C(int z_):z(z_){}
-	int h(){return behavior<D>::that()->x;}
+	int h(){return that()->x;}
 };
 
 struct X : DPCB::assembly<behavior_A, behavior_B, behavior_C>

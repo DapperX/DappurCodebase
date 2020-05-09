@@ -114,7 +114,7 @@ public:
 	operator multibehavior<D,Bs...>&()
 	{
 		static_assert(std::is_base_of<assembly_impl,D>::value);
-		// static_assert(std::conjunction<try_match_behavior<Bs,D>...>::value);
+		static_assert(std::conjunction<try_match_behavior<Bs,D>...>::value);
 		return *reinterpret_cast<multibehavior<D,Bs...>*>(this);
 	}
 
@@ -122,7 +122,7 @@ public:
 	operator const multibehavior<D,Bs...>&() const
 	{
 		static_assert(std::is_base_of<assembly_impl,D>::value);
-		// static_assert(std::conjunction<try_match_behavior<Bs,D>...>::value);
+		static_assert(std::conjunction<try_match_behavior<Bs,D>...>::value);
 		return *reinterpret_cast<const multibehavior<D,Bs...>*>(this);
 	}
 };
