@@ -12,15 +12,15 @@ namespace DPCB{
 template<class Any, template<class> class ...Bs>
 class assembly_impl;
 
-template<class ...Bs>
-class assembly_impl<wrapper_any<Bs...>>:
-	public wrapper_construct_from_tuple<Bs>...
+template<class ...IBs>
+class assembly_impl<wrapper_any<IBs...>>:
+	public wrapper_construct_from_tuple<IBs>...
 {
 	template<int> class tag{};
 public:
-	template<class ...Tuples, tag<0>(*)=std::enable_if_t<(sizeof...(Bs)==sizeof...(Tuples)), std::nullptr_t>()>
+	template<class ...Tuples, tag<0>(*)=std::enable_if_t<(sizeof...(IBs)==sizeof...(Tuples)), std::nullptr_t>()>
 	assembly_impl(Tuples &&...tps) :
-		wrapper_construct_from_tuple<Bs>(tps)...
+		wrapper_construct_from_tuple<IBs>(tps)...
 	{
 	}
 
@@ -33,10 +33,10 @@ public:
 	{
 	}
 
-	template<class ...Tuples, tag<1>(*)=std::enable_if_t<(sizeof...(Bs)>sizeof...(Tuples)), std::nullptr_t>()>
+	template<class ...Tuples, tag<1>(*)=std::enable_if_t<(sizeof...(IBs)>sizeof...(Tuples)), std::nullptr_t>()>
 	assembly_impl(Tuples &&...tps) :
 		assembly_impl(
-			std::make_index_sequence<sizeof...(Bs)-sizeof...(Tuples)>(),
+			std::make_index_sequence<sizeof...(IBs)-sizeof...(Tuples)>(),
 			std::forward<Tuples>(tps)...
 		)
 	{
