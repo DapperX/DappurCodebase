@@ -94,8 +94,9 @@ struct Y : DPCB::assembly<behavior_A, behavior_C>
 };
 
 template<class D>
-void single_b(behavior_C<D>)
+int test_singleb(behavior_B<D> &b)
 {
+	return b.g();
 }
 
 #define VALUE_CONST 1000
@@ -180,10 +181,9 @@ TEST(TestBehavior, BehaviorCast)
 		std::forward_as_tuple(10),
 		std::forward_as_tuple(30)
 	);
-#if 0
-	single_b(x);
-	single_b(DPCB::behavior_cast<behavior_C>(y));
-#endif
+
+	EXPECT_EQ(test_singleb(x), 2);
+	EXPECT_EQ(test_singleb(DPCB::behavior_cast<behavior_B>(x)), 2);
 
 	EXPECT_EQ(test_multib_ref<X>(x), x.f()+x.h());
 	EXPECT_EQ(test_multib_ref<Y>(y), y.f()+y.h());
