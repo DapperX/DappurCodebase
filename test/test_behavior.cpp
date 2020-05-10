@@ -41,9 +41,6 @@ public:
 	template<class D> using b_l_t = behavior_list<D, T>;
 	template<class D> using b_a_t = Alloc<D, T>;
 	struct inner : DPCB::assembly<b_l_t, b_a_t>{
-		// export behaviors
-		template<class D> using behavior_list = b_l_t<D>;
-		// export constructors
 		using DPCB::assembly<b_l_t, b_a_t>::assembly;
 	};
 public:
@@ -54,7 +51,7 @@ template<typename T, template<class, typename> class Alloc=behavior_allocator>
 using list = typename list_impl<T, Alloc>::type;
 
 template<class D>
-int* f(list<int>::behavior_list<D> &l)
+int* f(behavior_list<D, int> &l)
 {
 	return l.push_back();
 }
@@ -77,7 +74,8 @@ struct behavior_B : DPCB::behavior<D>
 	int g(){return that()->y;}
 };
 
-template<class D>
+// Generic behavior
+template<class D, class=void>
 struct behavior_C : DPCB::behavior<D>
 {
 	using behavior<D>::that;
@@ -91,9 +89,25 @@ struct X : DPCB::assembly<behavior_A, behavior_B, behavior_C>
 	using DPCB::assembly<behavior_A, behavior_B, behavior_C>::assembly;
 };
 
-struct Y : DPCB::assembly<behavior_A, behavior_C>
+
+// Specialization for Y
+struct tag_behavior_for_Y{};
+template<class D>
+using behavior_C_for_Y = behavior_C<D, tag_behavior_for_Y>;
+
+template<class D>
+struct behavior_C<D, tag_behavior_for_Y>
+	: DPCB::behavior<D>
 {
-	using DPCB::assembly<behavior_A, behavior_C>::assembly;
+	using behavior<D>::that;
+	int z;
+	behavior_C(int z_):z(z_){}
+	int h(){return that()->x*2;}
+};
+
+struct Y : DPCB::assembly<behavior_A, behavior_C_for_Y>
+{
+	using DPCB::assembly<behavior_A, behavior_C_for_Y>::assembly;
 };
 
 template<class D>
@@ -153,6 +167,14 @@ TEST(TestBehavior, Assembly)
 	EXPECT_EQ(x.f(), 3);
 	EXPECT_EQ(x.g(), 2);
 	EXPECT_EQ(x.h(), 1);
+
+	Y y(
+		std::forward_as_tuple(10),
+		std::forward_as_tuple(30)
+	);
+
+	EXPECT_EQ(y.f(), 30);
+	EXPECT_EQ(y.h(), 10*2);
 
 	using BAC = multibehavior<X,behavior_A,behavior_C>;
 	using BA = typename match_behavior<behavior_A,X>::type;

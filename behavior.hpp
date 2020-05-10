@@ -21,24 +21,24 @@ protected:
 
 namespace detail{
 
-template<template<class> class B, class D>
+template<template<class...> class B, class D>
 class match_behavior_impl
 {
-	template<typename BT>
-	static B<BT> match(B<BT>&&);
+	template<class BT, class ...A>
+	static B<BT,A...> match(B<BT,A...>&&);
 	static void match(...);
 public:
 	using type = decltype(match(std::declval<D>()));
 };
 
-template<template<class> class B, class D,
+template<template<class...> class B, class D,
 	class Cond = typename match_behavior_impl<B,D>::type>
 class try_match_behavior_impl :
 	public std::true_type
 {
 };
 
-template<template<class> class B, class D>
+template<template<class...> class B, class D>
 class try_match_behavior_impl<B, D, void> :
 	public std::false_type
 {
@@ -46,22 +46,22 @@ class try_match_behavior_impl<B, D, void> :
 
 } // namespace detail
 
-template<template<class> class B, class D>
+template<template<class...> class B, class D>
 using match_behavior = std::enable_if_t<
 	!std::is_void<typename detail::match_behavior_impl<B, D>::type>::value,
 	detail::match_behavior_impl<B, D>
 >;
 
-template<template<class> class B, class D>
+template<template<class...> class B, class D>
 using try_match_behavior = detail::try_match_behavior_impl<B, D>;
 
 
 namespace detail{
 
-template<class D, class IBsw, template<class> class ...Bs>
+template<class D, class IBsw, template<class...> class ...Bs>
 class multibehavior_impl;
 
-template<class D, class IB, class ...IBs, template<class> class B, template<class> class ...Bs>
+template<class D, class IB, class ...IBs, template<class...> class B, template<class...> class ...Bs>
 class multibehavior_impl<D, wrapper_any<IB,IBs...>, B, Bs...> :
 	public std::conditional<
 		std::is_same<IB, typename match_behavior<B,D>::type>::value,
@@ -86,7 +86,7 @@ class multibehavior_impl<D, IBsw>
 } // namespace detail
 
 
-template<class D, template<class> class ...Bs>
+template<class D, template<class...> class ...Bs>
 class multibehavior :
 	public detail::multibehavior_impl<D, typename D::__behavior, Bs...>
 {
@@ -95,7 +95,7 @@ class multibehavior :
 
 namespace detail{
 
-template<class Any, template<class> class ...Bs>
+template<class Any, template<class...> class ...Bs>
 class assembly_impl;
 
 template<class ...IBs>
@@ -130,7 +130,7 @@ public:
 
 	using __behavior = wrapper_any<IBs...>;
 
-	template<class D, template<class> class ...Bs>
+	template<class D, template<class...> class ...Bs>
 	operator multibehavior<D,Bs...>&()
 	{
 		static_assert(std::is_base_of<assembly_impl,D>::value,
@@ -140,7 +140,7 @@ public:
 		return *reinterpret_cast<multibehavior<D,Bs...>*>(this);
 	}
 
-	template<class D, template<class> class ...Bs>
+	template<class D, template<class...> class ...Bs>
 	operator const multibehavior<D,Bs...>&() const
 	{
 		static_assert(std::is_base_of<assembly_impl,D>::value,
@@ -151,7 +151,7 @@ public:
 	}
 };
 
-template<class ...Frds, template<class> class B, template<class> class ...Bs>
+template<class ...Frds, template<class...> class B, template<class...> class ...Bs>
 class assembly_impl<wrapper_any<Frds...>, B, Bs...> :
 	public assembly_impl<wrapper_any<Frds...,B<assembly_impl<wrapper_any<Frds...>,B,Bs...>>>, Bs...>
 {
@@ -162,7 +162,7 @@ public:
 
 } // namespace detail
 
-template<template<class> class ...Bs>
+template<template<class...> class ...Bs>
 using assembly = detail::assembly_impl<wrapper_any<>, Bs...>;
 
 
@@ -182,19 +182,19 @@ inline auto behavior_upcast(const assembly_impl<wrapper_any<IBs...>> *pa)
 
 } // namespace detail
 
-template<template<class> class ...Bs, class D, class MB=multibehavior<D,Bs...>>
+template<template<class...> class ...Bs, class D, class MB=multibehavior<D,Bs...>>
 inline MB& behavior_cast(D &d)
 {
 	return static_cast<MB&>(d);
 }
 
-template<template<class> class ...Bs, class D, class MB=multibehavior<D,Bs...>>
+template<template<class...> class ...Bs, class D, class MB=multibehavior<D,Bs...>>
 inline const MB& behavior_cast(const D &d)
 {
 	return static_cast<const MB&>(d);
 }
 
-template<template<class> class ...Bs, class D, class MB=multibehavior<D,Bs...>>
+template<template<class...> class ...Bs, class D, class MB=multibehavior<D,Bs...>>
 inline MB* behavior_cast(D *pd)
 {
 	static_assert(std::conjunction<try_match_behavior<Bs,D>...>::value,
@@ -202,7 +202,7 @@ inline MB* behavior_cast(D *pd)
 	return reinterpret_cast<MB*>(detail::behavior_upcast(pd));
 }
 
-template<template<class> class ...Bs, class D, class MB=multibehavior<D,Bs...>>
+template<template<class...> class ...Bs, class D, class MB=multibehavior<D,Bs...>>
 inline const MB* behavior_cast(const D *pd)
 {
 	static_assert(std::conjunction<try_match_behavior<Bs,D>...>::value,
