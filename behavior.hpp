@@ -1,5 +1,5 @@
-#ifndef _DPCB_CRTP_HPP_
-#define _DPCB_CRTP_HPP_
+#ifndef _DPCB_BEHAVIOR_HPP_
+#define _DPCB_BEHAVIOR_HPP_
 
 #include <cstdint>
 #include <type_traits>
@@ -18,30 +18,45 @@ protected:
 	const D* that() const{ return static_cast<const D*>(this); }
 };
 
+
+namespace detail{
+
 template<template<class> class B, class D>
-class match_behavior
+class match_behavior_impl
 {
 	template<typename BT>
 	static B<BT> match(B<BT>&&);
+	static void match(...);
 public:
 	using type = decltype(match(std::declval<D>()));
 };
 
-template<template<class> class B, class D, class Cond=std::void_t<>>
+template<template<class> class B, class D,
+	class Cond = typename match_behavior_impl<B,D>::type>
 class try_match_behavior_impl :
-	public std::false_type
-{
-};
-
-template<template<class> class B, class D>
-class try_match_behavior_impl<B, D, std::void_t<typename match_behavior<B,D>::type>> :
 	public std::true_type
 {
 };
 
 template<template<class> class B, class D>
-using try_match_behavior = try_match_behavior_impl<B, D>;
+class try_match_behavior_impl<B, D, void> :
+	public std::false_type
+{
+};
 
+} // namespace detail
+
+template<template<class> class B, class D>
+using match_behavior = std::enable_if_t<
+	!std::is_void<typename detail::match_behavior_impl<B, D>::type>::value,
+	detail::match_behavior_impl<B, D>
+>;
+
+template<template<class> class B, class D>
+using try_match_behavior = detail::try_match_behavior_impl<B, D>;
+
+
+namespace detail{
 
 template<class D, class IBsw, template<class> class ...Bs>
 class multibehavior_impl;
@@ -59,7 +74,8 @@ class multibehavior_impl<D, wrapper_any<IB,IBs...>, B, Bs...> :
 		multibehavior_impl<D, wrapper_any<IBs...>, B, Bs...>
 	>::type
 {
-	static_assert(try_match_behavior<B,D>::value);
+	static_assert(try_match_behavior<B,D>::value,
+		"Fail to match behavior. Check whether the converted type owns it");
 };
 
 template<class D, class IBsw>
@@ -67,13 +83,17 @@ class multibehavior_impl<D, IBsw>
 {
 };
 
+} // namespace detail
+
 
 template<class D, template<class> class ...Bs>
 class multibehavior :
-	public multibehavior_impl<D, typename D::__behavior, Bs...>
+	public detail::multibehavior_impl<D, typename D::__behavior, Bs...>
 {
 };
 
+
+namespace detail{
 
 template<class Any, template<class> class ...Bs>
 class assembly_impl;
@@ -82,7 +102,7 @@ template<class ...IBs>
 class assembly_impl<wrapper_any<IBs...>>:
 	public wrapper_construct_from_tuple<IBs>...
 {
-	template<int> class tag{};
+	template<int> class tag;
 public:
 	template<class ...Tuples, tag<0>(*)=std::enable_if_t<(sizeof...(IBs)==sizeof...(Tuples)), std::nullptr_t>()>
 	assembly_impl(Tuples &&...tps) :
@@ -113,16 +133,20 @@ public:
 	template<class D, template<class> class ...Bs>
 	operator multibehavior<D,Bs...>&()
 	{
-		static_assert(std::is_base_of<assembly_impl,D>::value);
-		static_assert(std::conjunction<try_match_behavior<Bs,D>...>::value);
+		static_assert(std::is_base_of<assembly_impl,D>::value,
+			"Try to convert to a different owner of the behavior");
+		static_assert(std::conjunction<try_match_behavior<Bs,D>...>::value,
+			"Fail to match all behavior. Check whether the converted type owns them");
 		return *reinterpret_cast<multibehavior<D,Bs...>*>(this);
 	}
 
 	template<class D, template<class> class ...Bs>
 	operator const multibehavior<D,Bs...>&() const
 	{
-		static_assert(std::is_base_of<assembly_impl,D>::value);
-		static_assert(std::conjunction<try_match_behavior<Bs,D>...>::value);
+		static_assert(std::is_base_of<assembly_impl,D>::value,
+			"Try to convert to a different owner of the behavior");
+		static_assert(std::conjunction<try_match_behavior<Bs,D>...>::value,
+			"Fail to match all behavior. Check whether the converted type owns them");
 		return *reinterpret_cast<const multibehavior<D,Bs...>*>(this);
 	}
 };
@@ -136,52 +160,56 @@ public:
 	using assembly_impl<wrapper_any<Frds...,B<assembly_impl<wrapper_any<Frds...>,B,Bs...>>>, Bs...>::assembly_impl;
 };
 
+} // namespace detail
+
 template<template<class> class ...Bs>
-using assembly = assembly_impl<wrapper_any<>, Bs...>;
+using assembly = detail::assembly_impl<wrapper_any<>, Bs...>;
 
 
 namespace detail{
 
 template<class ...IBs>
-inline auto behavior_downcast(assembly_impl<wrapper_any<IBs...>> *pa)
+inline auto behavior_upcast(assembly_impl<wrapper_any<IBs...>> *pa)
 {
 	return pa;
 }
 
 template<class ...IBs>
-inline auto behavior_downcast(const assembly_impl<wrapper_any<IBs...>> *pa)
+inline auto behavior_upcast(const assembly_impl<wrapper_any<IBs...>> *pa)
 {
 	return pa;
 }
 
-}
+} // namespace detail
 
-template<template<class> class ...Bs, class D>
-inline multibehavior<D,Bs...>& behavior_cast(D &d)
+template<template<class> class ...Bs, class D, class MB=multibehavior<D,Bs...>>
+inline MB& behavior_cast(D &d)
 {
-	return static_cast<multibehavior<D,Bs...>&>(d);
+	return static_cast<MB&>(d);
 }
 
-template<template<class> class ...Bs, class D>
-inline const multibehavior<D,Bs...>& behavior_cast(const D &d)
+template<template<class> class ...Bs, class D, class MB=multibehavior<D,Bs...>>
+inline const MB& behavior_cast(const D &d)
 {
-	return static_cast<const multibehavior<D,Bs...>&>(d);
+	return static_cast<const MB&>(d);
 }
 
-template<template<class> class ...Bs, class D>
-inline multibehavior<D,Bs...>* behavior_cast(D *pd)
+template<template<class> class ...Bs, class D, class MB=multibehavior<D,Bs...>>
+inline MB* behavior_cast(D *pd)
 {
-	static_assert(std::conjunction<try_match_behavior<Bs,D>...>::value);
-	return reinterpret_cast<multibehavior<D,Bs...>*>(detail::behavior_downcast(pd));
+	static_assert(std::conjunction<try_match_behavior<Bs,D>...>::value,
+		"Fail to match all behavior. Check whether the converted type owns them");
+	return reinterpret_cast<MB*>(detail::behavior_upcast(pd));
 }
 
-template<template<class> class ...Bs, class D>
-inline const multibehavior<D,Bs...>* behavior_cast(const D *pd)
+template<template<class> class ...Bs, class D, class MB=multibehavior<D,Bs...>>
+inline const MB* behavior_cast(const D *pd)
 {
-	static_assert(std::conjunction<try_match_behavior<Bs,D>...>::value);
-	return reinterpret_cast<const multibehavior<D,Bs...>*>(detail::behavior_downcast(pd));
+	static_assert(std::conjunction<try_match_behavior<Bs,D>...>::value,
+		"Fail to match all behavior. Check whether the converted type owns them");
+	return reinterpret_cast<const MB*>(detail::behavior_upcast(pd));
 }
 
 }
 
-#endif //_DPCB_CRTP_HPP_
+#endif //_DPCB_BEHAVIOR_HPP_

@@ -214,3 +214,13 @@ TEST(TestBehavior, BehaviorCast)
 		cy.f()*VALUE_CONST
 	);
 }
+
+TEST(TestBehavior, TryMatchBehavior)
+{
+	EXPECT_TRUE((try_match_behavior<behavior_A,X>::value));
+	EXPECT_TRUE((try_match_behavior<behavior_B,X>::value));
+	EXPECT_TRUE((try_match_behavior<behavior_C,X>::value));
+	EXPECT_TRUE((try_match_behavior<behavior_A,Y>::value));
+	EXPECT_FALSE((try_match_behavior<behavior_B,Y>::value));
+	EXPECT_TRUE((try_match_behavior<behavior_C,Y>::value));
+}
