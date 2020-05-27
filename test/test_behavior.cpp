@@ -91,12 +91,12 @@ struct X : DPCB::assembly<behavior_A, behavior_B, behavior_C>
 
 
 // Specialization for Y
-struct tag_behavior_for_Y{};
+struct Y;
 template<class D>
-using behavior_C_for_Y = behavior_C<D, tag_behavior_for_Y>;
+using behavior_C_for_Y = behavior_C<D, Y>;
 
 template<class D>
-struct behavior_C<D, tag_behavior_for_Y>
+struct behavior_C<D, Y>
 	: DPCB::behavior<D>
 {
 	using behavior<D>::that;
@@ -177,8 +177,8 @@ TEST(TestBehavior, Assembly)
 	EXPECT_EQ(y.h(), 10*2);
 
 	using BAC = multibehavior<X,behavior_A,behavior_C>;
-	using BA = typename match_behavior<behavior_A,X>::type;
-	using BC = typename match_behavior<behavior_C,X>::type;
+	using BA = typename match_behavior<X,behavior_A>::type;
+	using BC = typename match_behavior<X,behavior_C>::type;
 
 	EXPECT_TRUE((std::is_base_of<BA, BAC>::value));
 	EXPECT_TRUE((std::is_base_of<BC, BAC>::value));
@@ -239,10 +239,10 @@ TEST(TestBehavior, BehaviorCast)
 
 TEST(TestBehavior, TryMatchBehavior)
 {
-	EXPECT_TRUE((try_match_behavior<behavior_A,X>::value));
-	EXPECT_TRUE((try_match_behavior<behavior_B,X>::value));
-	EXPECT_TRUE((try_match_behavior<behavior_C,X>::value));
-	EXPECT_TRUE((try_match_behavior<behavior_A,Y>::value));
-	EXPECT_FALSE((try_match_behavior<behavior_B,Y>::value));
-	EXPECT_TRUE((try_match_behavior<behavior_C,Y>::value));
+	EXPECT_TRUE((try_match_behavior<X,behavior_A>::value));
+	EXPECT_TRUE((try_match_behavior<X,behavior_B>::value));
+	EXPECT_TRUE((try_match_behavior<X,behavior_C>::value));
+	EXPECT_TRUE((try_match_behavior<Y,behavior_A>::value));
+	EXPECT_FALSE((try_match_behavior<Y,behavior_B>::value));
+	EXPECT_TRUE((try_match_behavior<Y,behavior_C>::value));
 }
