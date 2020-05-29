@@ -13,10 +13,13 @@ export DIR_INCLUDE = $(DIR_LIB)
 
 CXXFLAG += $(DIR_INCLUDE:%=-I%)
 
-.PHONY : test clean
+.PHONY : test build_test clean
 
 test :
-	$(MAKE) all -C test
+	$(MAKE) run -C test
+
+build_test :
+	$(MAKE) build -C test
 
 clean :
 	$(MAKE) clean -C test

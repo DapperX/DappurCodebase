@@ -9,9 +9,11 @@ TEST_EXEC = DPCB.test
 LDFLAG += -lgtest_main -lgtest -lpthread
 
 
-.PHONY : all clean
+.PHONY : build run clean
 
-all : $(DIR_RUN)/$(TEST_EXEC)
+build : $(DIR_RUN)/$(TEST_EXEC)
+
+run : $(DIR_RUN)/$(TEST_EXEC)
 	$<
 
 clean:

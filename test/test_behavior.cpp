@@ -5,7 +5,6 @@
 #include <type_traits>
 #include "gtest/gtest.h"
 #include "behavior.hpp"
-using namespace DPCB;
 
 template<class D, typename T>
 struct behavior_list : DPCB::behavior<D>
@@ -15,7 +14,7 @@ struct behavior_list : DPCB::behavior<D>
 	{
 		static_assert(std::is_class<typename D::type_allocator>::value);
 		// puts("push_back()");
-		return behavior<D>::that()->allocate();
+		return DPCB::behavior<D>::that()->allocate();
 	}
 };
 
@@ -59,7 +58,7 @@ int* f(behavior_list<D, int> &l)
 template<class D>
 struct behavior_A : DPCB::behavior<D>
 {
-	using behavior<D>::that;
+	using DPCB::behavior<D>::that;
 	int x;
 	behavior_A(int x_):x(x_){}
 	int f()const{return that()->z;}
@@ -68,7 +67,7 @@ struct behavior_A : DPCB::behavior<D>
 template<class D>
 struct behavior_B : DPCB::behavior<D>
 {
-	using behavior<D>::that;
+	using DPCB::behavior<D>::that;
 	int y;
 	behavior_B(int y_):y(y_){}
 	int g(){return that()->y;}
@@ -78,7 +77,7 @@ struct behavior_B : DPCB::behavior<D>
 template<class D, class=void>
 struct behavior_C : DPCB::behavior<D>
 {
-	using behavior<D>::that;
+	using DPCB::behavior<D>::that;
 	int z;
 	behavior_C(int z_):z(z_){}
 	int h(){return that()->x;}
@@ -99,7 +98,7 @@ template<class D>
 struct behavior_C<D, Y>
 	: DPCB::behavior<D>
 {
-	using behavior<D>::that;
+	using DPCB::behavior<D>::that;
 	int z;
 	behavior_C(int z_):z(z_){}
 	int h(){return that()->x*2;}
@@ -119,25 +118,25 @@ int test_singleb(behavior_B<D> &b)
 #define VALUE_CONST 1000
 
 template<class D>
-int test_multib_ref(multibehavior<D, behavior_A, behavior_C> &ac)
+int test_multib_ref(DPCB::multibehavior<D, behavior_A, behavior_C> &ac)
 {
 	return ac.f() + ac.h();
 }
 
 template<class D>
-int test_multib_ref(const multibehavior<D, behavior_A, behavior_C> &ac)
+int test_multib_ref(const DPCB::multibehavior<D, behavior_A, behavior_C> &ac)
 {
 	return ac.f() + VALUE_CONST;
 }
 
 template<class D>
-int test_multib_ptr(multibehavior<D, behavior_A, behavior_C> *ac)
+int test_multib_ptr(DPCB::multibehavior<D, behavior_A, behavior_C> *ac)
 {
 	return ac->f() * ac->h();
 }
 
 template<class D>
-int test_multib_ptr(const multibehavior<D, behavior_A, behavior_C> *ac)
+int test_multib_ptr(const DPCB::multibehavior<D, behavior_A, behavior_C> *ac)
 {
 	return ac->f() * VALUE_CONST;
 }
@@ -176,9 +175,9 @@ TEST(TestBehavior, Assembly)
 	EXPECT_EQ(y.f(), 30);
 	EXPECT_EQ(y.h(), 10*2);
 
-	using BAC = multibehavior<X,behavior_A,behavior_C>;
-	using BA = typename match_behavior<X,behavior_A>::type;
-	using BC = typename match_behavior<X,behavior_C>::type;
+	using BAC = DPCB::multibehavior<X,behavior_A,behavior_C>;
+	using BA = typename DPCB::match_behavior<X,behavior_A>::type;
+	using BC = typename DPCB::match_behavior<X,behavior_C>::type;
 
 	EXPECT_TRUE((std::is_base_of<BA, BAC>::value));
 	EXPECT_TRUE((std::is_base_of<BC, BAC>::value));
@@ -189,9 +188,9 @@ TEST(TestBehavior, Assembly)
 	EXPECT_EQ((get_offset<BC, X>()), 2*sizeof(int));
 
 	EXPECT_EQ(sizeof(X), 3*sizeof(int));
-	EXPECT_EQ(sizeof(multibehavior<X,behavior_A,behavior_B,behavior_C>), 3*sizeof(int));
-	EXPECT_EQ(sizeof(multibehavior<X,behavior_A,behavior_C>), 3*sizeof(int));
-	EXPECT_EQ(sizeof(multibehavior<Y,behavior_A,behavior_C>), 2*sizeof(int));
+	EXPECT_EQ(sizeof(DPCB::multibehavior<X,behavior_A,behavior_B,behavior_C>), 3*sizeof(int));
+	EXPECT_EQ(sizeof(DPCB::multibehavior<X,behavior_A,behavior_C>), 3*sizeof(int));
+	EXPECT_EQ(sizeof(DPCB::multibehavior<Y,behavior_A,behavior_C>), 2*sizeof(int));
 }
 
 TEST(TestBehavior, BehaviorCast)
@@ -239,10 +238,10 @@ TEST(TestBehavior, BehaviorCast)
 
 TEST(TestBehavior, TryMatchBehavior)
 {
-	EXPECT_TRUE((try_match_behavior<X,behavior_A>::value));
-	EXPECT_TRUE((try_match_behavior<X,behavior_B>::value));
-	EXPECT_TRUE((try_match_behavior<X,behavior_C>::value));
-	EXPECT_TRUE((try_match_behavior<Y,behavior_A>::value));
-	EXPECT_FALSE((try_match_behavior<Y,behavior_B>::value));
-	EXPECT_TRUE((try_match_behavior<Y,behavior_C>::value));
+	EXPECT_TRUE((DPCB::try_match_behavior<X,behavior_A>::value));
+	EXPECT_TRUE((DPCB::try_match_behavior<X,behavior_B>::value));
+	EXPECT_TRUE((DPCB::try_match_behavior<X,behavior_C>::value));
+	EXPECT_TRUE((DPCB::try_match_behavior<Y,behavior_A>::value));
+	EXPECT_FALSE((DPCB::try_match_behavior<Y,behavior_B>::value));
+	EXPECT_TRUE((DPCB::try_match_behavior<Y,behavior_C>::value));
 }
