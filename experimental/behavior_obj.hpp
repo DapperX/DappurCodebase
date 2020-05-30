@@ -23,14 +23,17 @@ class multibehavior_v :
 {
 };
 
+
+namespace detail{
+
 template<class ...IBs>
-class behavior_obj
+class behavior_obj_impl
 {
 protected:
 	intptr_t arena[1+sizeof...(IBs)+2];
 
 	template<class D, std::size_t ...Is>
-	behavior_obj(const D *ptr_src, std::index_sequence<Is...>)
+	behavior_obj_impl(const D *ptr_src, std::index_sequence<Is...>)
 	{
 		// assign vtable pointer
 		intptr_t** ptr_obj = (intptr_t**)&arena[0];
@@ -49,44 +52,95 @@ protected:
 	}
 
 	template<class D>
-	behavior_obj(const D *ptr_src) :
-		behavior_obj(ptr_src, std::make_index_sequence<sizeof...(IBs)>())
+	behavior_obj_impl(const D *ptr_src) :
+		behavior_obj_impl(ptr_src, std::make_index_sequence<sizeof...(IBs)>())
 	{
 		static_assert(std::conjunction<std::is_base_of<IBs,D>...>::value,
 			"Fail to match all behavior. Check whether the converted type owns them");
 	}
 
-	void* get_this()
-	{
-		return (void*)&arena;
-	}
-	const void* get_this() const
-	{
-		return (const void*)&arena;
-	}
-
-	template<class ...FIBs, class D>
-	friend behavior_obj<FIBs...> make_behavior_obj(D*);
-
-	template<class ...FIBs, class D>
-	friend const behavior_obj<FIBs...> make_behavior_obj(const D*);
-
-public:
-	behavior_obj(const behavior_obj &other)
+	behavior_obj_impl(const behavior_obj_impl &other)
 	{
 		intptr_t** ptr_obj = (intptr_t**)&arena[0];
 		intptr_t* vtable = &arena[1+sizeof...(IBs)+2];
 		*ptr_obj = vtable;
 
-		intptr_t offset = (intptr_t)other.get_this()-(intptr_t)ptr_obj;
+		intptr_t offset = (intptr_t)&other.arena-(intptr_t)ptr_obj;
 		// skip the arena[0] as it represents the vtable pointer
 		for(std::size_t i=1; i<=sizeof...(IBs); ++i)
 			arena[i] = other.arena[i] + offset;
 	}
+};
 
-	operator multibehavior_v<IBs...>*()
+} // namespace detail
+
+template<class ...IBs>
+class behavior_obj : public detail::behavior_obj_impl<IBs...>
+{
+protected:
+	void* get_this() const
+	{
+		return (void*)&this->arena;
+	}
+
+	template<class D>
+	behavior_obj(D *ptr_src) :
+		detail::behavior_obj_impl<IBs...>(ptr_src)
+	{
+	}
+
+	template<class ...FIBs, class D>
+	friend behavior_obj<FIBs...> make_behavior_obj(D&);
+
+public:
+	behavior_obj(const behavior_obj &other) :
+		detail::behavior_obj_impl<IBs...>(other)
+	{
+	}
+
+	operator multibehavior_v<IBs...>*() const
 	{
 		return reinterpret_cast<multibehavior_v<IBs...>*>(get_this());
+	}
+
+	multibehavior_v<IBs...>& operator*() const
+	{
+		return *reinterpret_cast<multibehavior_v<IBs...>*>(get_this());
+	}
+
+	multibehavior_v<IBs...>* operator->() const
+	{
+		return reinterpret_cast<multibehavior_v<IBs...>*>(get_this());
+	}
+};
+
+template<class ...IBs>
+class const_behavior_obj : public detail::behavior_obj_impl<IBs...>
+{
+protected:
+	const void* get_this() const
+	{
+		return (const void*)&this->arena;
+	}
+
+	template<class D>
+	const_behavior_obj(const D *ptr_src) :
+		detail::behavior_obj_impl<IBs...>(ptr_src)
+	{
+	}
+
+	template<class ...FIBs, class D>
+	friend const_behavior_obj<FIBs...> make_behavior_obj(const D&);
+
+public:
+	const_behavior_obj(const const_behavior_obj &other) :
+		detail::behavior_obj_impl<IBs...>(other)
+	{
+	}
+
+	const_behavior_obj(const behavior_obj<IBs...> &other) :
+		detail::behavior_obj_impl<IBs...>(other)
+	{
 	}
 
 	operator const multibehavior_v<IBs...>*() const
@@ -94,37 +148,28 @@ public:
 		return reinterpret_cast<const multibehavior_v<IBs...>*>(get_this());
 	}
 
-	multibehavior_v<IBs...>& operator*()
-	{
-		return *reinterpret_cast<multibehavior_v<IBs...>*>(get_this());
-	}
-
 	const multibehavior_v<IBs...>& operator*() const
 	{
 		return *reinterpret_cast<const multibehavior_v<IBs...>*>(get_this());
 	}
 
-	multibehavior_v<IBs...>* operator->()
-	{
-		return reinterpret_cast<multibehavior_v<IBs...>*>(get_this());
-	}
-
-	multibehavior_v<IBs...>* operator->() const
+	const multibehavior_v<IBs...>* operator->() const
 	{
 		return reinterpret_cast<const multibehavior_v<IBs...>*>(get_this());
 	}
 };
 
+
 template<class ...IBs, class D>
-inline const behavior_obj<IBs...> make_behavior_obj(const D *ptr_src)
+inline const_behavior_obj<IBs...> make_behavior_obj(const D &src)
 {
-	return behavior_obj<IBs...>(ptr_src);
+	return const_behavior_obj<IBs...>(&src);
 }
 
 template<class ...IBs, class D>
-inline behavior_obj<IBs...> make_behavior_obj(D *ptr_src)
+inline behavior_obj<IBs...> make_behavior_obj(D &src)
 {
-	return behavior_obj<IBs...>(ptr_src);
+	return behavior_obj<IBs...>(&src);
 }
 
 }

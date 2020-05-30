@@ -127,7 +127,7 @@ int test_multib_v_ptr(multibehavior_v<behavior_VA, behavior_VC> *ac)
 	return ac->f() * ac->h();
 }
 
-TEST(TestBehaviorObj, BehaviorCastV)
+TEST(TestBehaviorObj, MakeBehaviorObj)
 {
 	IX ix(
 		std::forward_as_tuple(1),
@@ -144,19 +144,26 @@ TEST(TestBehaviorObj, BehaviorCastV)
 	EXPECT_EQ(test_singleb_v(iy), iy.f());
 
 	using DPCB::experimental::make_behavior_obj;
-	auto ix_bo = make_behavior_obj<behavior_VA,behavior_VC>(&ix);
-	auto iy_bo = make_behavior_obj<behavior_VA,behavior_VC>(&iy);
+	auto ix_bo = make_behavior_obj<behavior_VA,behavior_VC>(ix);
+	auto iy_bo = make_behavior_obj<behavior_VA,behavior_VC>(iy);
 	EXPECT_EQ(test_multib_v_ref(*ix_bo), ix.f()+ix.h());
 	EXPECT_EQ(test_multib_v_ref(*iy_bo), iy.f()+iy.h());
 	EXPECT_EQ(test_multib_v_ptr(ix_bo), ix.f()*ix.h());
 	EXPECT_EQ(test_multib_v_ptr(iy_bo), iy.f()*iy.h());
 
+	using DPCB::experimental::const_behavior_obj;
 	const IX &cix = ix;
 	const IY &ciy = iy;
-	const auto cix_bo = make_behavior_obj<behavior_VA,behavior_VC>(&cix);
-	const auto ciy_bo = make_behavior_obj<behavior_VA,behavior_VC>(&ciy);
+	auto cix_bo = make_behavior_obj<behavior_VA,behavior_VC>(cix);
+	const_behavior_obj<behavior_VA,behavior_VC> ciy_bo = make_behavior_obj<behavior_VA,behavior_VC>(iy);
 	EXPECT_EQ(test_multib_v_ref(*cix_bo), cix.f()+cix.h()+VALUE_CONST);
 	EXPECT_EQ(test_multib_v_ref(*ciy_bo), ciy.f()+ciy.h()+VALUE_CONST);
 	EXPECT_EQ(test_multib_v_ptr(cix_bo), cix.f()*cix.h()+VALUE_CONST);
 	EXPECT_EQ(test_multib_v_ptr(ciy_bo), ciy.f()*ciy.h()+VALUE_CONST);
+
+	EXPECT_EQ(ix_bo->h(), ix.h());
+	EXPECT_EQ(iy_bo->h(), iy.h());
+
+	EXPECT_EQ(cix_bo->h(), cix.h());
+	EXPECT_EQ(ciy_bo->h(), ciy.h());
 }
