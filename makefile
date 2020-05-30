@@ -1,5 +1,5 @@
-export CXX = g++
-export CXXFLAG = -std=c++17 -Wall -Wextra
+export CXX ?= g++
+export CXXFLAG += -std=c++17 -Wall -Wextra
 
 ifeq ($(MODE),debug)
 	CXXFLAG += -g3
