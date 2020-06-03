@@ -15,10 +15,16 @@ class behavior
 {
 protected:
 	template<typename..., class T=std::remove_cv_t<D>>
-	T* that(){ return static_cast<T*>(this); }
+	T* that(){
+		static_assert(std::is_base_of<behavior,D>::value);
+		return (T*)this;
+	}
 
 	template<typename..., class T=std::remove_cv_t<D>>
-	const T* that() const{ return static_cast<const T*>(this); }
+	const T* that() const{
+		static_assert(std::is_base_of<behavior,D>::value);
+		return (const T*)this;
+	}
 };
 
 
