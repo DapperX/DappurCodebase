@@ -7,6 +7,13 @@
 
 namespace DPCB::experimental{
 
+template<class D>
+using behavior_v = detail::behavior_impl<D, D>;
+
+template<template<class...> class ...Bs>
+using assembly_v = assembly<void, Bs...>;
+
+
 namespace detail{
 
 template<class T>

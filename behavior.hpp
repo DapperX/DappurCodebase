@@ -10,25 +10,26 @@
 
 namespace DPCB{
 
-template<class D>
-class behavior
+namespace detail{
+
+template<class D, class SubBase>
+class behavior_impl
 {
 protected:
 	template<typename..., class T=std::remove_cv_t<D>>
 	T* that(){
-		static_assert(std::is_base_of<behavior,D>::value);
-		return (T*)this;
+		static_assert(std::is_base_of<SubBase,D>::value);
+		static_assert(std::is_base_of<behavior_impl,SubBase>::value);
+		return (T*)(SubBase*)this;
 	}
 
 	template<typename..., class T=std::remove_cv_t<D>>
 	const T* that() const{
-		static_assert(std::is_base_of<behavior,D>::value);
-		return (const T*)this;
+		static_assert(std::is_base_of<SubBase,D>::value);
+		static_assert(std::is_base_of<behavior_impl,SubBase>::value);
+		return (const T*)(const SubBase*)this;
 	}
 };
-
-
-namespace detail{
 
 template<class D, template<class...> class B>
 class match_behavior_impl
@@ -54,6 +55,11 @@ class try_match_behavior_impl<D, B, void> :
 };
 
 } // namespace detail
+
+template<class D, template<class...> class B>
+class behavior : public detail::behavior_impl<D,behavior<D,B>>
+{
+};
 
 template<class D, template<class...> class B>
 using match_behavior = std::enable_if_t<
@@ -104,11 +110,11 @@ class multibehavior :
 
 namespace detail{
 
-template<class Any, template<class...> class ...Bs>
+template<class X, class Any, template<class...> class ...Bs>
 class assembly_impl;
 
-template<class ...IBs>
-class assembly_impl<wrapper_any<IBs...>>:
+template<class X, class ...IBs>
+class assembly_impl<X, wrapper_any<IBs...>>:
 	public wrapper_construct_from_tuple<IBs>...
 {
 	template<int> class tag;
@@ -160,31 +166,40 @@ public:
 	}
 };
 
-template<class ...Frds, template<class...> class B, template<class...> class ...Bs>
-class assembly_impl<wrapper_any<Frds...>, B, Bs...> :
-	public assembly_impl<wrapper_any<Frds...,B<assembly_impl<wrapper_any<Frds...>,B,Bs...>>>, Bs...>
+template<class X, class ...IBs, template<class...> class B, template<class...> class ...Bs>
+class assembly_impl<X, wrapper_any<IBs...>, B, Bs...> :
+	public std::conditional<
+		std::is_void<X>::value,
+		assembly_impl<X, wrapper_any<IBs...,B<assembly_impl<X,wrapper_any<IBs...>,B,Bs...>>>, Bs...>,
+		assembly_impl<X, wrapper_any<IBs...,B<X>>, Bs...>
+	>::type
 {
+	friend B<X>;
 	friend B<assembly_impl>;
 public:
-	using assembly_impl<wrapper_any<Frds...,B<assembly_impl<wrapper_any<Frds...>,B,Bs...>>>, Bs...>::assembly_impl;
+	using std::conditional<
+		std::is_void<X>::value,
+		assembly_impl<X, wrapper_any<IBs...,B<assembly_impl>>, Bs...>,
+		assembly_impl<X, wrapper_any<IBs...,B<X>>, Bs...>
+	>::type::type;
 };
 
 } // namespace detail
 
-template<template<class...> class ...Bs>
-using assembly = detail::assembly_impl<wrapper_any<>, Bs...>;
+template<class X, template<class...> class ...Bs>
+using assembly = detail::assembly_impl<X, wrapper_any<>, Bs...>;
 
 
 namespace detail{
 
-template<class ...IBs>
-inline auto behavior_upcast(assembly_impl<wrapper_any<IBs...>> *pa)
+template<class X, class ...IBs>
+inline auto behavior_upcast(assembly_impl<X,wrapper_any<IBs...>> *pa)
 {
 	return pa;
 }
 
-template<class ...IBs>
-inline auto behavior_upcast(const assembly_impl<wrapper_any<IBs...>> *pa)
+template<class X, class ...IBs>
+inline auto behavior_upcast(const assembly_impl<X,wrapper_any<IBs...>> *pa)
 {
 	return pa;
 }

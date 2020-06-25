@@ -1,7 +1,8 @@
 #include "gtest/gtest.h"
 #include "experimental/behavior_obj.hpp"
 
-using DPCB::behavior;
+using DPCB::experimental::behavior_v;
+using DPCB::experimental::assembly_v;
 using DPCB::experimental::multibehavior_v;
 
 struct behavior_VA
@@ -32,9 +33,9 @@ struct behavior_VC
 };
 
 template<class D>
-struct behavior_IA : behavior<D>, behavior_VA
+struct behavior_IA : behavior_v<D>, behavior_VA
 {
-	using behavior<D>::that;
+	using behavior_v<D>::that;
 
 	int x;
 	behavior_IA(int x_):x(x_){}
@@ -53,9 +54,9 @@ struct behavior_IB : behavior_VB
 };
 
 template<class D>
-struct behavior_IC : behavior<D>, behavior_VC
+struct behavior_IC : behavior_v<D>, behavior_VC
 {
-	using behavior<D>::that;
+	using behavior_v<D>::that;
 	using behavior_VC::behavior_VC;
 
 	// behavior_IC(int z_):behavior_VC(z_){}
@@ -67,14 +68,14 @@ struct behavior_IC : behavior<D>, behavior_VC
 	}
 };
 
-struct IX : DPCB::assembly<behavior_IA, behavior_IB, behavior_IC>
+struct IX : assembly_v<behavior_IA, behavior_IB, behavior_IC>
 {
-	using DPCB::assembly<behavior_IA, behavior_IB, behavior_IC>::assembly;
+	using assembly_v<behavior_IA, behavior_IB, behavior_IC>::assembly_v;
 };
 
-struct IY : DPCB::assembly<behavior_IA, behavior_IC>
+struct IY : assembly_v<behavior_IA, behavior_IC>
 {
-	using DPCB::assembly<behavior_IA, behavior_IC>::assembly;
+	using assembly_v<behavior_IA, behavior_IC>::assembly_v;
 };
 
 struct C{

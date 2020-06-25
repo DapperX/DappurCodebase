@@ -7,19 +7,19 @@
 #include "behavior.hpp"
 
 template<class D, typename T>
-struct behavior_list : DPCB::behavior<D>
+struct behavior_list : DPCB::behavior<D,behavior_list>
 {
 	behavior_list(int size){(void)size;}
 	T* push_back()
 	{
 		static_assert(std::is_class<typename D::type_allocator>::value);
 		// puts("push_back()");
-		return DPCB::behavior<D>::that()->allocate();
+		return DPCB::behavior<D,behavior_list>::that()->allocate();
 	}
 };
 
 template<class D, typename T>
-struct behavior_allocator : DPCB::behavior<D>
+struct behavior_allocator : DPCB::behavior<D,behavior_allocator>
 {
 protected:
 	using type_allocator = behavior_allocator;
@@ -27,7 +27,7 @@ protected:
 };
 
 template<class D, typename T>
-struct behavior_alloc : DPCB::behavior<D>
+struct behavior_alloc : DPCB::behavior<D,behavior_alloc>
 {
 protected:
 	using type_allocator = behavior_alloc;
@@ -39,8 +39,8 @@ class list_impl{
 public:
 	template<class D> using b_l_t = behavior_list<D, T>;
 	template<class D> using b_a_t = Alloc<D, T>;
-	struct inner : DPCB::assembly<b_l_t, b_a_t>{
-		using DPCB::assembly<b_l_t, b_a_t>::assembly;
+	struct inner : DPCB::assembly<inner, b_l_t, b_a_t>{
+		using DPCB::assembly<inner, b_l_t, b_a_t>::assembly;
 	};
 public:
 	using type = inner;
@@ -56,58 +56,58 @@ int* f(behavior_list<D, int> &l)
 }
 
 template<class D>
-struct behavior_A : DPCB::behavior<D>
+struct behavior_A : DPCB::behavior<D,behavior_A>
 {
-	using DPCB::behavior<D>::that;
+	using DPCB::behavior<D,behavior_A>::that;
 	int x;
 	behavior_A(int x_):x(x_){}
 	int f()const{return that()->z;}
 };
 
 template<class D>
-struct behavior_B : DPCB::behavior<D>
+struct behavior_B : DPCB::behavior<D,behavior_B>
 {
-	using DPCB::behavior<D>::that;
+	using DPCB::behavior<D,behavior_B>::that;
 	int y;
 	behavior_B(int y_):y(y_){}
 	int g(){return that()->y;}
 };
 
 // Generic behavior
-template<class D, class=void>
-struct behavior_C : DPCB::behavior<D>
+template<class D>
+struct behavior_C : DPCB::behavior<D,behavior_C>
 {
-	using DPCB::behavior<D>::that;
+	using DPCB::behavior<D,behavior_C>::that;
 	int z;
 	behavior_C(int z_):z(z_){}
 	int h(){return that()->x;}
 };
 
-struct X : DPCB::assembly<behavior_A, behavior_B, behavior_C>
+struct X : DPCB::assembly<X, behavior_A, behavior_B, behavior_C>
 {
-	using DPCB::assembly<behavior_A, behavior_B, behavior_C>::assembly;
+	using DPCB::assembly<X, behavior_A, behavior_B, behavior_C>::assembly;
 };
 
 
 // Specialization for Y
-struct Y;
-template<class D>
-using behavior_C_for_Y = behavior_C<D, Y>;
-
-template<class D>
-struct behavior_C<D, Y>
-	: DPCB::behavior<D>
+template<>
+struct behavior_C<struct Y> : DPCB::behavior<Y,behavior_C>
 {
-	using DPCB::behavior<D>::that;
+protected:
 	int z;
+public:
+	using DPCB::behavior<Y,behavior_C>::that;
 	behavior_C(int z_):z(z_){}
-	int h(){return that()->x*2;}
+	int h();
 };
 
-struct Y : DPCB::assembly<behavior_A, behavior_C_for_Y>
+struct Y : DPCB::assembly<Y, behavior_A, behavior_C>
 {
-	using DPCB::assembly<behavior_A, behavior_C_for_Y>::assembly;
+	using DPCB::assembly<Y, behavior_A, behavior_C>::assembly;
 };
+
+int behavior_C<Y>::h(){return that()->x*2;}
+
 
 template<class D>
 int test_singleb(behavior_B<D> &b)
