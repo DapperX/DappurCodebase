@@ -129,7 +129,7 @@ public:
 	assembly_impl(std::index_sequence<I...>, Tuples &&...tps) :
 		assembly_impl(
 			std::forward<Tuples>(tps)...,
-			((void)I, std::tuple())...
+			((void)I, std::tuple<>())...
 		)
 	{
 	}
