@@ -58,7 +58,9 @@ class multibase
 	class inner<std::index_sequence<I...>>
 	{
 	public:
-		using type = wrapper_base<wrapper_label<I, Ts>...>;
+		using type = wrapper_base<
+			wrapper_label<std::integral_constant<std::size_t,I>, Ts>...
+		>;
 	};
 
 public:
