@@ -54,12 +54,42 @@ class wrapper_any<>
 };
 
 
-template<std::size_t, typename T>
-class wrapper_label : public T
+template<typename T>
+class wrapper_class
+{
+	static_assert(!std::is_class_v<T>, "This wrapper does not apply to a class type");
+public:
+	T data;
+
+	template<typename ...Args>
+	wrapper_class(Args &&...args) : data(std::forward<Args>(args)...)
+	{
+	}
+
+	operator T() const
+	{
+		return data;
+	}
+};
+
+
+namespace detail{
+
+template<class, class T>
+class wrapper_label_impl : public T
 {
 public:
 	using type = T;
+	using T::T;
 };
+
+}
+
+template<class Label, typename T>
+using wrapper_label = detail::wrapper_label_impl<
+	Label,
+	std::conditional_t<std::is_class_v<T>, T, wrapper_class<T>>
+>;
 
 
 template<typename ...Ts>
